@@ -76,7 +76,7 @@ class CityConstructions : IsPartOfGameInfoSerialization {
     val inProgressConstructions = HashMap<String, Int>()
     var currentConstructionIsUserSet = false
     var constructionQueue = mutableListOf<String>()
-    var productionOverflow = 0
+    private var productionOverflow = 0
     private val queueMaxSize = 10
 
     // Maps cities to the buildings they received
@@ -143,7 +143,7 @@ class CityConstructions : IsPartOfGameInfoSerialization {
     }
 
     /** @param constructionName needs to be a non-perpetual construction, else an empty string is returned */
-    internal fun getTurnsToConstructionString(constructionName: String, useStoredProduction:Boolean = true) =
+    private fun getTurnsToConstructionString(constructionName: String, useStoredProduction:Boolean = true) =
         getTurnsToConstructionString(getConstruction(constructionName), useStoredProduction)
 
     /** @param construction needs to be a non-perpetual construction, else an empty string is returned */
@@ -249,8 +249,7 @@ class CityConstructions : IsPartOfGameInfoSerialization {
             isBuilt(buildingNameOrUnique) || getBuiltBuildings().any { it.replaces == buildingNameOrUnique || it.hasUnique(buildingNameOrUnique) }
 
     fun getWorkDone(constructionName: String): Int {
-        return if (inProgressConstructions.containsKey(constructionName)) inProgressConstructions[constructionName]!!
-            else 0
+        return inProgressConstructions[constructionName] ?: 0
     }
 
     fun getRemainingWork(constructionName: String, useStoredProduction: Boolean = true): Int {
@@ -545,7 +544,7 @@ class CityConstructions : IsPartOfGameInfoSerialization {
         addFreeBuildings()
     }
 
-    fun triggerNewBuildingUniques(building: Building) {
+    private fun triggerNewBuildingUniques(building: Building) {
         val triggerNotificationText ="due to constructing [${building.name}]"
 
         for (unique in building.uniqueObjects)
@@ -578,7 +577,7 @@ class CityConstructions : IsPartOfGameInfoSerialization {
         updateUniques()
     }
 
-    fun updateUniques(onLoadGame:Boolean = false) {
+    private fun updateUniques(onLoadGame:Boolean = false) {
         builtBuildingUniqueMap.clear()
         for (building in getBuiltBuildings())
             builtBuildingUniqueMap.addUniques(building.uniqueObjects)
@@ -738,11 +737,11 @@ class CityConstructions : IsPartOfGameInfoSerialization {
 
     fun chooseNextConstruction() {
         validateConstructionQueue()
-        if (constructionQueue.isNotEmpty()) {
-            if (currentConstructionFromQueue != ""
-                    // If the USER set a perpetual construction, then keep it!
-                    && (getConstruction(currentConstructionFromQueue) !is PerpetualConstruction || currentConstructionIsUserSet)) return
-        }
+        if (constructionQueue.isNotEmpty()
+            && (currentConstructionFromQueue != ""
+                // If the USER set a perpetual construction, then keep it!
+                && (getConstruction(currentConstructionFromQueue) !is PerpetualConstruction || currentConstructionIsUserSet))
+        ) return
 
         if (isCityConstructionAutomated()) {
             ConstructionAutomation(this).chooseNextConstruction()
