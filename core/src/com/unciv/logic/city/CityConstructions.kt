@@ -744,10 +744,7 @@ class CityConstructions : IsPartOfGameInfoSerialization {
                     && (getConstruction(currentConstructionFromQueue) !is PerpetualConstruction || currentConstructionIsUserSet)) return
         }
 
-        val isCurrentPlayersTurn = city.civ.gameInfo.isUsersTurn()
-                || !city.civ.gameInfo.gameParameters.isOnlineMultiplayer
-        if ((UncivGame.Current.settings.autoAssignCityProduction && isCurrentPlayersTurn) // only automate if the active human player has the setting to automate production
-                || !city.civ.isHuman() || city.isPuppet) {
+        if (isCityConstructionAutomated()) {
             ConstructionAutomation(this).chooseNextConstruction()
         }
 
@@ -758,6 +755,13 @@ class CityConstructions : IsPartOfGameInfoSerialization {
         val newTile = Automation.getTileForConstructionImprovement(city, improvement) ?: return
         newTile.improvementFunctions.markForCreatesOneImprovement(improvement.name)
     }
+
+    private fun isCityConstructionAutomated() = (
+        (!city.civ.isHuman() ||
+            UncivGame.Current.settings.autoAssignCityProduction
+            && (city.civ.gameInfo.isUsersTurn() || !city.civ.gameInfo.gameParameters.isOnlineMultiplayer)) // only automate if the active human player has the setting to automate production
+            || city.isPuppet
+        )
 
     fun canAddToQueue(construction: IConstruction) =
         !isQueueFull() &&
